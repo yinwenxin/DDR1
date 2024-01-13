@@ -1,5 +1,5 @@
 
-`include "config_ddr.v"
+`include "../config/config_ddr.v"
 
 module ddr_sdram_ctrl (
     input  wire                                           io_clk, 
