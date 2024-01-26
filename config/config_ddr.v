@@ -17,3 +17,7 @@
     parameter tRP              =    15.0; // tRP    ns    Precharge command period
     parameter tRRD             =    10.0; // tRRD   ns    Active bank a to Active bank b command time
     parameter tWR              =    15.0; // tWR    ns    Write recovery time
+
+    parameter [ROW_BITS+1:0] EMR_INIT      = {2'b01, {(ROW_BITS){1'b0}}};                           //Extended mode register initialize, normal drive, enable DLL
+    parameter [ROW_BITS+1:0] BMR_RESET_DLL = {2'b00, {(ROW_BITS-9){1'b0}}, 9'b1_0010_1001};         //reset DLL, BL=2, tCAS=2
+    parameter [ROW_BITS+1:0] BMR_CLEAR_DLL = {2'b00, {(ROW_BITS-9){1'b0}}, 9'b0_0010_1001};         //clear DLL, BL=2, tCAS=2

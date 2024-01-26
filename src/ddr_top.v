@@ -1,11 +1,15 @@
-
+`ifndef CONFIG_DDR
+`define CONFIG_DDR
+`include "../config/define_ddr.v"
 `include "../config/config_ddr.v"
+`endif
+
 
 module ddr_sdram_ctrl (
-    input  wire                                           io_clk, 
-    input  wire                                           io_clk_rstn,
+    input  wire                                           sys_clk, 
+    input  wire                                           sys_rstn_async,
 	
-    output reg                                            core_clk_rstn,
+    output reg                                            core_rstn_sync,
     output reg                                            core_clk,
 
     input  wire                                           awvalid,
