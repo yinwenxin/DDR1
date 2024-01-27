@@ -1,8 +1,10 @@
-`ifndef CONFIG_DDR
-`define CONFIG_DDR
-`include "../config/define_ddr.v"
 `include "../config/config_ddr.v"
+
+`ifndef DEFINE_DDR
+`define DEFINE_DDR
+`include "../config/define_ddr.v"
 `endif
+
 
 
 module ddr_sdram_ctrl (
@@ -45,9 +47,9 @@ module ddr_sdram_ctrl (
 );
 
 
-
-
-
+assign ddr_ck_p = ~ core_clk;
+assign ddr_ck_n =   core_clk;
+assign ddr_cke  = ~ ddr_cs_n;
 
 
 

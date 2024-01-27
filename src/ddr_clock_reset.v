@@ -1,4 +1,4 @@
-module ddr_clock_reset(
+module ddr_clock_reset (
     input  wire                                           sys_clk, 
     input  wire                                           sys_rstn_async,
 	
