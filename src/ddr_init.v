@@ -76,51 +76,55 @@ end
 always @(*) begin
     case(init_state)
         RESET           :   next_state = RESET_WAIT     ;
-        RESET_WAIT      :   next_state = (counter_wait >= 200           ) ? CKE             : RESET_WAIT        ;
+        RESET_WAIT      :   next_state = (counter_wait > 200           ) ? CKE             : RESET_WAIT        ;
         CKE             :   next_state = CKE_WAIT       ;
         CKE_WAIT        :   next_state = PRECHARGE0     ;
         PRECHARGE0      :   next_state = PRECHARGE0_WAIT;
-        PRECHARGE0_WAIT :   next_state = (counter_wait >= tRP/tCLK + 1  ) ? EMR_LMR         : PRECHARGE0_WAIT   ;
+        PRECHARGE0_WAIT :   next_state = (counter_wait > tRP/tCLK      ) ? EMR_LMR         : PRECHARGE0_WAIT   ;
         EMR_LMR         :   next_state = EMR_LMR_WAIT   ;
-        EMR_LMR_WAIT    :   next_state = (counter_wait >= tMRD/tCLK + 1 ) ? RESET_DLL       : EMR_LMR_WAIT      ;
+        EMR_LMR_WAIT    :   next_state = (counter_wait > tMRD/tCLK     ) ? RESET_DLL       : EMR_LMR_WAIT      ;
         RESET_DLL       :   next_state = RESET_DLL_WAIT ;
-        RESET_DLL_WAIT  :   next_state = (counter_wait >= tMRD/tCLK + 1 ) ? PRECHARGE1      : RESET_DLL_WAIT    ;
+        RESET_DLL_WAIT  :   next_state = (counter_wait > tMRD/tCLK     ) ? PRECHARGE1      : RESET_DLL_WAIT    ;
         PRECHARGE1      :   next_state = PRECHARGE1_WAIT;
-        PRECHARGE1_WAIT :   next_state = (counter_wait >= tRP/tCLK + 1  ) ? REFRESH0        : PRECHARGE1_WAIT   ;
+        PRECHARGE1_WAIT :   next_state = (counter_wait > tRP/tCLK      ) ? REFRESH0        : PRECHARGE1_WAIT   ;
         REFRESH0        :   next_state = REFRESH0_WAIT  ;
-        REFRESH0_WAIT   :   next_state = (counter_wait >= tRFC/tCLK + 1 ) ? REFRESH1        : REFRESH0_WAIT     ;
+        REFRESH0_WAIT   :   next_state = (counter_wait > tRFC/tCLK     ) ? REFRESH1        : REFRESH0_WAIT     ;
         REFRESH1        :   next_state = REFRESH1_WAIT  ;
-        REFRESH1_WAIT   :   next_state = (counter_wait >= tRFC/tCLK + 1 ) ? CLEAR_DLL       : REFRESH1_WAIT     ;
+        REFRESH1_WAIT   :   next_state = (counter_wait > tRFC/tCLK     ) ? CLEAR_DLL       : REFRESH1_WAIT     ;
         CLEAR_DLL       :   next_state = CLEAR_DLL_WAIT ;
-        CLEAR_DLL_WAIT  :   next_state = (counter_wait >= tMRD/tCLK + 1
-                                          && counter_check >= 200       ) ? INIT_END        : CLEAR_DLL_WAIT    ;
+        CLEAR_DLL_WAIT  :   next_state = (counter_wait > tMRD/tCLK
+                                          && counter_check > 200       ) ? INIT_END        : CLEAR_DLL_WAIT    ;
         INIT_END        :   next_state = INIT_END       ;
         default         :   next_state = RESET          ;
     endcase
 end
 
-always @(*) begin
-    case(init_state)
-        RESET           :begin COMMAND = DESELECT   ; MR_COMMAND = EMR_INIT     ; end
-        RESET_WAIT      :begin COMMAND = DESELECT   ; MR_COMMAND = EMR_INIT     ; end
-        CKE             :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        CKE_WAIT        :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        PRECHARGE0      :begin COMMAND = PRECHARGE  ; MR_COMMAND = EMR_INIT     ; end
-        PRECHARGE0_WAIT :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        EMR_LMR         :begin COMMAND = LMR        ; MR_COMMAND = EMR_INIT     ; end
-        EMR_LMR_WAIT    :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        RESET_DLL       :begin COMMAND = LMR        ; MR_COMMAND = BMR_RESET_DLL; end
-        RESET_DLL_WAIT  :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        PRECHARGE1      :begin COMMAND = PRECHARGE  ; MR_COMMAND = EMR_INIT     ; end
-        PRECHARGE1_WAIT :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        REFRESH0        :begin COMMAND = REFRESH    ; MR_COMMAND = EMR_INIT     ; end
-        REFRESH0_WAIT   :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        REFRESH1        :begin COMMAND = REFRESH    ; MR_COMMAND = EMR_INIT     ; end
-        REFRESH1_WAIT   :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        CLEAR_DLL       :begin COMMAND = LMR        ; MR_COMMAND = BMR_CLEAR_DLL; end
-        CLEAR_DLL_WAIT  :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end                       
-        INIT_END        :begin COMMAND = NOP        ; MR_COMMAND = EMR_INIT     ; end
-        default         :begin COMMAND = DESELECT   ; MR_COMMAND = EMR_INIT     ; end
+always @(posedge core_clk or negedge core_rstn_sync) begin
+    if(!core_rstn_sync) begin
+        COMMAND     <= DESELECT;
+        MR_COMMAND  <= EMR_INIT;
+    end
+    else case(next_state)
+        RESET           :begin COMMAND <= COM_DESELECT   ; MR_COMMAND <= EMR_INIT     ; end
+        RESET_WAIT      :begin COMMAND <= COM_DESELECT   ; MR_COMMAND <= EMR_INIT     ; end
+        CKE             :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        CKE_WAIT        :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        PRECHARGE0      :begin COMMAND <= COM_PRECHARGE  ; MR_COMMAND <= EMR_INIT     ; end
+        PRECHARGE0_WAIT :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        EMR_LMR         :begin COMMAND <= COM_LMR        ; MR_COMMAND <= EMR_INIT     ; end
+        EMR_LMR_WAIT    :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        RESET_DLL       :begin COMMAND <= COM_LMR        ; MR_COMMAND <= BMR_RESET_DLL; end
+        RESET_DLL_WAIT  :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        PRECHARGE1      :begin COMMAND <= COM_PRECHARGE  ; MR_COMMAND <= EMR_INIT     ; end
+        PRECHARGE1_WAIT :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        REFRESH0        :begin COMMAND <= COM_REFRESH    ; MR_COMMAND <= EMR_INIT     ; end
+        REFRESH0_WAIT   :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        REFRESH1        :begin COMMAND <= COM_REFRESH    ; MR_COMMAND <= EMR_INIT     ; end
+        REFRESH1_WAIT   :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        CLEAR_DLL       :begin COMMAND <= COM_LMR        ; MR_COMMAND <= BMR_CLEAR_DLL; end
+        CLEAR_DLL_WAIT  :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end                       
+        INIT_END        :begin COMMAND <= COM_NOP        ; MR_COMMAND <= EMR_INIT     ; end
+        default         :begin COMMAND <= COM_DESELECT   ; MR_COMMAND <= EMR_INIT     ; end
     endcase
 end
 
