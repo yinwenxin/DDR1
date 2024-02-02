@@ -35,27 +35,104 @@ module ddr_sdram_ctrl (
 
     output wire                                           ddr_ck_p, ddr_ck_n,  
     output wire                                           ddr_cke,
-    output reg                                            ddr_cs_n,
-    output reg                                            ddr_ras_n,
-    output reg                                            ddr_cas_n,
-    output reg                                            ddr_we_n,
-    output reg                  [            BA_BITS-1:0] ddr_ba,
-    output reg                  [           ROW_BITS-1:0] ddr_a,
+    output wire                                           ddr_cs_n,
+    output wire                                           ddr_ras_n,
+    output wire                                           ddr_cas_n,
+    output wire                                           ddr_we_n,
+    output wire                 [            BA_BITS-1:0] ddr_ba,
+    output wire                 [           ROW_BITS-1:0] ddr_a,
     output wire                 [((1<<DQ_LEVEL)+1)/2-1:0] ddr_dm,
     inout                       [((1<<DQ_LEVEL)+1)/2-1:0] ddr_dqs,
     inout                       [      (4<<DQ_LEVEL)-1:0] ddr_dq    
 );
 
 
-assign ddr_ck_p = ~ core_clk;
-assign ddr_ck_n =   core_clk;
-assign ddr_cke  = ~ ddr_cs_n;
+assign  ddr_ck_p = ~ core_clk;
+assign  ddr_ck_n =   core_clk;
+assign  ddr_cke  = ~ ddr_cs_n;
+
+
+wire    init_done;
+wire    init_ddr_cs_n, init_ddr_ras_n, init_ddr_cas_n, init_ddr_we_n;
+wire    [     BA_BITS-1:0] init_ddr_ba;
+wire    [    ROW_BITS-1:0] init_ddr_a;
+
+ddr_init ddr_init_u0(
+                        .core_clk               (core_clk                   ),
+                        .core_rstn_sync         (core_rstn_sync             ),
+                        .init_done              (init_done                  ),
+
+                        .ddr_cs_n               (init_ddr_cs_n              ),
+                        .ddr_ras_n              (init_ddr_ras_n             ),
+                        .ddr_cas_n              (init_ddr_cas_n             ),
+                        .ddr_we_n               (init_ddr_we_n              ),
+                        .ddr_ba                 (init_ddr_ba                ),
+                        .ddr_a                  (init_ddr_a                 )
+
+);
+
+wire    sys_rstn_sync, sys_clk_div2;
 
 
 
+ddr_clock_reset ddr_clock_reset_u0(
+                        .sys_clk                (sys_clk                    ),
+                        .sys_rstn_async         (sys_rstn_async             ),
 
+                        .sys_rstn_sync          (sys_rstn_sync              ),
+                        .sys_clk_div2           (sys_clk_div2               ),
+                        .core_clk               (core_clk                   ),
+                        .core_rstn_sync         (core_rstn_sync             )
+                        
+);
 
+wire    trans_ddr_cs_n, trans_ddr_ras_n, trans_ddr_cas_n, trans_ddr_we_n;
+assign  ddr_ba      =   init_done ? trans_ddr_ba    : init_ddr_ba   ;
+assign  ddr_a       =   init_done ? trans_ddr_a     : init_ddr_a    ;
+assign  ddr_cs_n    =   init_done ? trans_ddr_cs_n  : init_ddr_cs_n ;
+assign  ddr_cas_n   =   init_done ? trans_ddr_cas_n : init_ddr_cas_n;
+assign  ddr_ras_n   =   init_done ? trans_ddr_ras_n : init_ddr_ras_n;
+assign  ddr_we_n    =   init_done ? trans_ddr_we_n  : init_ddr_we_n ;
 
+ddr_trans ddr_trans_u0(
+                        .sys_clk                (sys_clk                    ),
+                        .sys_rstn_sync          (sys_rstn_sync              ),
+                        .sys_clk_div2           (sys_clk_div2               ),
+                        .core_clk               (core_clk                   ),
+                        .core_rstn_sync         (core_rstn_sync             ),
+
+                        .init_done              (init_done                  ),
+
+                        .ddr_cs_n               (trans_ddr_cs_n             ),
+                        .ddr_ras_n              (trans_ddr_ras_n            ),
+                        .ddr_cas_n              (trans_ddr_cas_n            ),
+                        .ddr_we_n               (trans_ddr_we_n             ),
+                        .ddr_ba                 (trans_ddr_ba               ),
+                        .ddr_a                  (trans_ddr_a                ),
+                        .ddr_dqs                (ddr_dqs                    ),
+                        .ddr_dm                 (ddr_dm                     ),
+                        .ddr_dq                 (ddr_dq                     ),
+
+                        .awvalid                (awvalid                    ),
+                        .awready                (awready                    ),
+                        .awaddr                 (awaddr                     ),
+                        .awlen                  (awlen                      ),
+                        .wvalid                 (wvalid                     ),
+                        .wready                 (wready                     ),
+                        .wlast                  (wlast                      ),  
+                        .wdata                  (wdata                      ),
+                        .bvalid                 (bvalid                     ),
+                        .bready                 (bready                     ),
+                        .arvalid                (arvalid                    ),
+                        .arready                (arready                    ),
+                        .araddr                 (araddr                     ),
+                        .arlen                  (arlen                      ),
+                        .rvalid                 (rvalid                     ),
+                        .rready                 (rready                     ),
+                        .rlast                  (rlast                      ),
+                        .rdata                  (rdata                      )
+
+);
 
 
 

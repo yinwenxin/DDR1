@@ -184,17 +184,38 @@ always @(posedge core_clk or negedge core_rstn_sync) begin
                 COMMAND <= COM_NOP;
                 main_state <= bready ? IDLE : WRITE_RESP;
             end
-
-
+            ACTIVE_R:begin
+                COMMAND <= COM_NOP;
+                MR_COMMAND <= EMR_INIT;
+                trans_cnt <= 0;
+                main_state <= READ;
+            end
+            READ:begin
+                COMMAND <= COM_NOP;
+                ddr_a <= (burst_last) ? ddr_a_col_auto_pre : ddr_a_col_no_pre;
+                if (rready & active_clk_cnt > tRCD/tCLK) begin
+                    COMMAND <= COM_WRITE;
+                    col_addr <= col_addr + 1;
+                    trans_cnt <= trans_cnt + 1;
+                    main_state <= (burst_last) ? READ_RESP : READ;
+                end
+            end
+            READ_RESP:begin
+                COMMAND <= COM_NOP;
+                main_state <= bready ? IDLE : READ_RESP;
+            end
 
         endcase
     end 
+
+end
 
 assign awready  = main_state == IDLE & awvalid & active_clk_cnt > tRC/tCLK;
 assign wready   = main_state == WRITE & wvalid & active_clk_cnt > tRCD/tCLK;
 assign bvalid   = main_state == WRITE_RESP;
 
-end
+
+
 
 
 
