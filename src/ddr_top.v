@@ -1,13 +1,12 @@
-`include "../config/config_ddr.v"
-
 `ifndef DEFINE_DDR
 `define DEFINE_DDR
-`include "../config/define_ddr.v"
+`include "./config/config_ddr.v"
+`include "./config/define_ddr.v"
 `endif
 
 
 
-module ddr_sdram_ctrl (
+module ddr_top (
     input  wire                                           sys_clk, 
     input  wire                                           sys_rstn_async,
 	
@@ -86,6 +85,9 @@ ddr_clock_reset ddr_clock_reset_u0(
                         
 );
 
+
+wire    [     BA_BITS-1:0] trans_ddr_ba;
+wire    [    ROW_BITS-1:0] trans_ddr_a;
 wire    trans_ddr_cs_n, trans_ddr_ras_n, trans_ddr_cas_n, trans_ddr_we_n;
 assign  ddr_ba      =   init_done ? trans_ddr_ba    : init_ddr_ba   ;
 assign  ddr_a       =   init_done ? trans_ddr_a     : init_ddr_a    ;
@@ -133,8 +135,6 @@ ddr_trans ddr_trans_u0(
                         .rdata                  (rdata                      )
 
 );
-
-
 
 
 
