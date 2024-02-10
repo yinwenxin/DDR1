@@ -1,4 +1,3 @@
-export DC_HOME=/tools/eda/synopsys/syn/U-2022.12-SP3
 all: com sim
 
 com:
