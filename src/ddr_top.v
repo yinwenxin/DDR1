@@ -7,12 +7,13 @@
 
 
 module ddr_top (
+//clock and reset
     input  wire                                           sys_clk, 
     input  wire                                           sys_rstn_async,
-	
     output reg                                            core_rstn_sync,
     output reg                                            core_clk,
 
+//AXI interface
     input  wire                                           awvalid,
     output wire                                           awready,
     input  wire  [BA_BITS+ROW_BITS+COL_BITS+DQ_LEVEL-2:0] awaddr,  
@@ -32,6 +33,7 @@ module ddr_top (
     output wire                                           rlast,
     output wire                       [(8<<DQ_LEVEL)-1:0] rdata,
 
+//ddr pin
     output wire                                           ddr_ck_p, ddr_ck_n,  
     output wire                                           ddr_cke,
     output wire                                           ddr_cs_n,
@@ -45,12 +47,13 @@ module ddr_top (
     inout                       [      (4<<DQ_LEVEL)-1:0] ddr_dq    
 );
 
-
+//complementary clock
 assign  ddr_ck_p = ~ core_clk;
 assign  ddr_ck_n =   core_clk;
+//clock enable
 assign  ddr_cke  = ~ ddr_cs_n;
 
-
+//initialize part
 wire    init_done;
 wire    init_ddr_cs_n, init_ddr_ras_n, init_ddr_cas_n, init_ddr_we_n;
 wire    [     BA_BITS-1:0] init_ddr_ba;
@@ -73,7 +76,7 @@ ddr_init ddr_init_u0(
 wire    sys_rstn_sync, sys_clk_div2;
 
 
-
+//clock and reset part
 ddr_clock_reset ddr_clock_reset_u0(
                         .sys_clk                (sys_clk                    ),
                         .sys_rstn_async         (sys_rstn_async             ),
@@ -85,7 +88,7 @@ ddr_clock_reset ddr_clock_reset_u0(
                         
 );
 
-
+//choose signals from translation and initialize
 wire    [     BA_BITS-1:0] trans_ddr_ba;
 wire    [    ROW_BITS-1:0] trans_ddr_a;
 wire    trans_ddr_cs_n, trans_ddr_ras_n, trans_ddr_cas_n, trans_ddr_we_n;

@@ -1,16 +1,16 @@
 `ifndef DEFINE_DDR
-`define DEFINE_DDR
-`include "./config/config_ddr.v"
-`include "./config/define_ddr.v"
+    `define DEFINE_DDR
+    `include "./config/config_ddr.v"
+    `include "./config/define_ddr.v"
 `endif
 
 module ddr_init (
     input  wire                                           core_clk, 
     input  wire                                           core_rstn_sync,
 
-    output wire                                           init_done,
+    output wire                                           init_done, //init_done flag
 
-    output reg                                            ddr_cs_n,
+    output reg                                            ddr_cs_n, //ddr command pin
     output reg                                            ddr_ras_n,
     output reg                                            ddr_cas_n,
     output reg                                            ddr_we_n,
@@ -41,7 +41,7 @@ localparam [4:0] CLEAR_DLL          = 5'd16;
 localparam [4:0] CLEAR_DLL_WAIT     = 5'd17;
 localparam [4:0] INIT_END           = 5'd18;
 
-reg [4:0] init_state, next_state;
+reg [4:0] init_state, next_state; 
 reg [7:0] counter_wait, counter_check;
 assign init_done = (init_state == INIT_END) ? 1 : 0;
 
@@ -52,6 +52,7 @@ always @(posedge core_clk or negedge core_rstn_sync) begin
         init_state <= next_state;
 end
 
+//clock counter between states
 always @(posedge core_clk or negedge core_rstn_sync) begin
     if(!core_rstn_sync)
         counter_wait <= 0;
@@ -63,6 +64,7 @@ always @(posedge core_clk or negedge core_rstn_sync) begin
         counter_wait <= counter_wait + 1;
 end
 
+//200 cycles are required between reset DLL and read command
 always @(posedge core_clk or negedge core_rstn_sync) begin
     if(!core_rstn_sync)
         counter_check <= 0;
@@ -72,6 +74,7 @@ always @(posedge core_clk or negedge core_rstn_sync) begin
         counter_check <= counter_check + 1;
 end
 
+//generate next state
 always @(*) begin
     case(init_state)
         RESET           :   next_state = RESET_WAIT     ;
@@ -98,6 +101,8 @@ always @(*) begin
     endcase
 end
 
+
+//send command and mode register command
 always @(posedge core_clk or negedge core_rstn_sync) begin
     if(!core_rstn_sync) begin
         `COMMAND     <= `COM_DESELECT;

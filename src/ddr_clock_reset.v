@@ -1,13 +1,13 @@
 module ddr_clock_reset (
-    input  wire                                           sys_clk, 
-    input  wire                                           sys_rstn_async,
+    input  wire                                           sys_clk, //System clock 300MHz
+    input  wire                                           sys_rstn_async, //Asynchronous system reset
 	
-    output reg                                            sys_rstn_sync,
+    output reg                                            sys_rstn_sync, //Synchronous system reset
 
-    output wire                                           sys_clk_div2,
+    output wire                                           sys_clk_div2, //150MHz
 
-    output wire                                           core_clk,
-    output reg                                            core_rstn_sync
+    output wire                                           core_clk, // Core clock 75MHz
+    output reg                                            core_rstn_sync //Synchronous system reset
 
 );
 
